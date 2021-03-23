@@ -1,14 +1,14 @@
-﻿import {Routes, Route, NavigationExtras, Params} from '@angular/router';
-import {Observable, Observer, of} from 'rxjs';
-import {Location} from '@angular/common';
+﻿import { Routes, Route, NavigationExtras, Params } from '@angular/router';
+import { Observable, Observer, of } from 'rxjs';
+import { Location } from '@angular/common';
 import {
   CacheMechanism,
   LOCALIZE_ROUTER_CONFIG,
   LocalizeRouterConfig,
 } from './localize-router.config';
-import {Inject, Injectable, Optional} from '@angular/core';
-import {HttpParams} from '@angular/common/http';
-import {flatten, getBrowserLang, TranslocoService} from "@ngneat/transloco";
+import { Inject, Injectable, Optional } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
+import { flatten, getBrowserLang, TranslocoService } from '@ngneat/transloco';
 
 const COOKIE_EXPIRY = 30; // 1 month
 
@@ -16,7 +16,7 @@ const COOKIE_EXPIRY = 30; // 1 month
  * Abstract class for parsing localization
  */
 @Injectable({
-  providedIn: "root"
+  providedIn: 'root',
 })
 export abstract class LocalizeParser {
   locales: string[];
@@ -35,10 +35,11 @@ export abstract class LocalizeParser {
   /**
    * Loader constructor
    */
-  protected constructor(@Inject(TranslocoService) public translate: TranslocoService,
-                        @Inject(Location) private location: Location,
-                        @Inject(LOCALIZE_ROUTER_CONFIG) private settings: LocalizeRouterConfig) {
-  }
+  protected constructor(
+    @Inject(TranslocoService) public translate: TranslocoService,
+    @Inject(Location) private location: Location,
+    @Inject(LOCALIZE_ROUTER_CONFIG) private settings: LocalizeRouterConfig
+  ) {}
 
   /**
    * Load routes and fetch necessary data
@@ -63,7 +64,6 @@ export abstract class LocalizeParser {
     });
   } */
 
-
   /**
    * Initialize language and routes
    */
@@ -81,29 +81,38 @@ export abstract class LocalizeParser {
     const browserLang = this._getBrowserLang();
 
     if (this.settings.defaultLangFunction) {
-      this.defaultLang = this.settings.defaultLangFunction(this.locales, this._cachedLang, browserLang);
+      this.defaultLang = this.settings.defaultLangFunction(
+        this.locales,
+        this._cachedLang,
+        browserLang
+      );
     } else {
-      this.defaultLang = this._cachedLang || browserLang || this.locales[0].toString();
+      this.defaultLang =
+        this._cachedLang || browserLang || this.locales[0].toString();
     }
     selectedLanguage = locationLang || this.defaultLang;
     this.translate.setDefaultLang(this.defaultLang);
 
     // set language on initialize
-    this.translate.setActiveLang(selectedLanguage)
+    this.translate.setActiveLang(selectedLanguage);
 
     let children: Routes = [];
     /** if set prefix is enforced */
     if (this.settings.alwaysSetPrefix) {
-      const baseRoute = {path: '', redirectTo: this.defaultLang, pathMatch: 'full'};
+      const baseRoute = {
+        path: '',
+        redirectTo: this.defaultLang,
+        pathMatch: 'full',
+      };
 
       /** extract potential wildcard route */
-      const wildcardIndex = routes.findIndex((route: Route) => route.path === '**');
+      const wildcardIndex = routes.findIndex(
+        (route: Route) => route.path === '**'
+      );
       if (wildcardIndex !== -1) {
         this._wildcardRoute = routes.splice(wildcardIndex, 1)[0];
       }
       children = this.routes.splice(0, this.routes.length, baseRoute);
-    } else {
-      children = [...this.routes]; // shallow copy of routes
     }
 
     /** exclude certain routes */
@@ -114,7 +123,10 @@ export abstract class LocalizeParser {
           this.routes.push(children[i]);
         }
         // remove from routes to translate only if doesn't have to translate `redirectTo` property
-        if (children[i].redirectTo === undefined || !(children[i].data['skipRouteLocalization']['localizeRedirectTo'])) {
+        if (
+          children[i].redirectTo === undefined ||
+          !children[i].data['skipRouteLocalization']['localizeRedirectTo']
+        ) {
           children.splice(i, 1);
         }
       }
@@ -123,7 +135,7 @@ export abstract class LocalizeParser {
     /** append children routes */
     if (children && children.length) {
       if (this.locales.length > 1 || this.settings.alwaysSetPrefix) {
-        this._languageRoute = {children: children};
+        this._languageRoute = { children: children };
         this.routes.unshift(this._languageRoute);
       }
     }
@@ -178,15 +190,24 @@ export abstract class LocalizeParser {
    */
   private _translateRouteTree(routes: Routes): void {
     routes.forEach((route: Route) => {
-      const skipRouteLocalization = (route.data && route.data['skipRouteLocalization']);
-      const localizeRedirection = !skipRouteLocalization || skipRouteLocalization['localizeRedirectTo'];
+      const skipRouteLocalization =
+        route.data && route.data['skipRouteLocalization'];
+      const localizeRedirection =
+        !skipRouteLocalization || skipRouteLocalization['localizeRedirectTo'];
 
       if (route.redirectTo && localizeRedirection) {
-        this._translateProperty(route, 'redirectTo', !route.redirectTo.indexOf('/'));
+        this._translateProperty(
+          route,
+          'redirectTo',
+          !route.redirectTo.indexOf('/')
+        );
       }
 
       if (!skipRouteLocalization) {
-        if (route.path !== null && route.path !== undefined/* && route.path !== '**'*/) {
+        if (
+          route.path !== null &&
+          route.path !== undefined /* && route.path !== '**'*/
+        ) {
           this._translateProperty(route, 'path');
         }
         if (route.children) {
@@ -203,14 +224,21 @@ export abstract class LocalizeParser {
    * Translate property
    * If first time translation then add original to route data object
    */
-  private _translateProperty(route: Route, property: string, prefixLang?: boolean): void {
+  private _translateProperty(
+    route: Route,
+    property: string,
+    prefixLang?: boolean
+  ): void {
     // set property to data if not there yet
-    const routeData: any = route.data = route.data || {};
+    const routeData: any = (route.data = route.data || {});
     if (!routeData.localizeRouter) {
       routeData.localizeRouter = {};
     }
     if (!routeData.localizeRouter[property]) {
-      routeData.localizeRouter = {...routeData.localizeRouter, [property]: route[property]};
+      routeData.localizeRouter = {
+        ...routeData.localizeRouter,
+        [property]: route[property],
+      };
     }
 
     const result = this.translateRoute(routeData.localizeRouter[property]);
@@ -218,11 +246,10 @@ export abstract class LocalizeParser {
   }
 
   get urlPrefix() {
-    if (this.settings.alwaysSetPrefix || this.currentLang !== this.defaultLang) {
+    if (this.settings.alwaysSetPrefix) {
       return this.currentLang ? this.currentLang : this.defaultLang;
-    } else {
-      return '';
     }
+    return '';
   }
 
   /**
@@ -245,10 +272,11 @@ export abstract class LocalizeParser {
     const pathSegments = queryParts[0].split('/');
 
     /** collect observables  */
-    return pathSegments
-        .map((part: string) => part.length ? this.translateText(part) : part)
-        .join('/') +
-      (queryParts.length > 1 ? `?${queryParts[1]}` : '');
+    return (
+      pathSegments
+        .map((part: string) => (part.length ? this.translateText(part) : part))
+        .join('/') + (queryParts.length > 1 ? `?${queryParts[1]}` : '')
+    );
   }
 
   /**
@@ -311,14 +339,19 @@ export abstract class LocalizeParser {
    */
   private _cacheWithLocalStorage(value?: string): string {
     try {
-      if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+      if (
+        typeof window === 'undefined' ||
+        typeof window.localStorage === 'undefined'
+      ) {
         return;
       }
       if (value) {
         window.localStorage.setItem(this.settings.cacheName, value);
         return;
       }
-      return this._returnIfInLocales(window.localStorage.getItem(this.settings.cacheName));
+      return this._returnIfInLocales(
+        window.localStorage.getItem(this.settings.cacheName)
+      );
     } catch (e) {
       // weird Safari issue in private mode, where LocalStorage is defined but throws error on access
       return;
@@ -330,7 +363,10 @@ export abstract class LocalizeParser {
    */
   private _cacheWithCookies(value?: string): string {
     try {
-      if (typeof document === 'undefined' || typeof document.cookie === 'undefined') {
+      if (
+        typeof document === 'undefined' ||
+        typeof document.cookie === 'undefined'
+      ) {
         return;
       }
       const name = encodeURIComponent(this.settings.cacheName);
@@ -339,7 +375,10 @@ export abstract class LocalizeParser {
         cookieTemplate = cookieTemplate
           .replace('{{value}}', `${name}=${encodeURIComponent(value)}`)
           .replace(/{{expires:?(\d+)?}}/g, (fullMatch, groupMatch) => {
-            const days = groupMatch === undefined ? COOKIE_EXPIRY : parseInt(groupMatch, 10);
+            const days =
+              groupMatch === undefined
+                ? COOKIE_EXPIRY
+                : parseInt(groupMatch, 10);
             const date: Date = new Date();
             date.setTime(date.getTime() + days * 86400000);
             return `expires=${date.toUTCString()}`;
@@ -348,7 +387,10 @@ export abstract class LocalizeParser {
         document.cookie = cookieTemplate;
         return;
       }
-      const regexp = new RegExp('(?:^' + name + '|;\\s*' + name + ')=(.*?)(?:;|$)', 'g');
+      const regexp = new RegExp(
+        '(?:^' + name + '|;\\s*' + name + ')=(.*?)(?:;|$)',
+        'g'
+      );
       const result = regexp.exec(document.cookie);
       return decodeURIComponent(result[1]);
     } catch (e) {
@@ -382,10 +424,14 @@ export abstract class LocalizeParser {
       // }
 
       if (this.settings.translateRoute) {
-        const flattenTranslationObject = flatten(this.translate.getTranslation(this.currentLang));
+        const flattenTranslationObject = flatten(
+          this.translate.getTranslation(this.currentLang)
+        );
 
         const fullKey = this.prefix + key;
-        const translationExists = Object.keys(flattenTranslationObject).find(key => key === fullKey);
+        const translationExists = Object.keys(flattenTranslationObject).find(
+          (key) => key === fullKey
+        );
 
         if (translationExists) {
           const res = this.translate.translate(fullKey, {}, this.currentLang);
@@ -403,7 +449,10 @@ export abstract class LocalizeParser {
    * @param newExtras extras that containes new QueryParams
    * @param currentQueryParams current query params
    */
-  public chooseQueryParams(newExtras: NavigationExtras, currentQueryParams: Params) {
+  public chooseQueryParams(
+    newExtras: NavigationExtras,
+    currentQueryParams: Params
+  ) {
     let queryParamsObj: Params;
     if (newExtras && newExtras.queryParams) {
       queryParamsObj = newExtras.queryParams;
@@ -419,7 +468,7 @@ export abstract class LocalizeParser {
    * @param params query params object
    */
   public formatQueryParams(params: Params): string {
-    return new HttpParams({fromObject: params}).toString();
+    return new HttpParams({ fromObject: params }).toString();
   }
 
   /**
@@ -438,11 +487,16 @@ export abstract class LocalizeParser {
 }
 
 @Injectable({
-  providedIn: "root"
+  providedIn: 'root',
 })
 export class DefaultLocalizeParser extends LocalizeParser {
-
-  constructor(translate: TranslocoService, location: Location, @Optional() @Inject(LOCALIZE_ROUTER_CONFIG) localizeRouterConfig?: LocalizeRouterConfig) {
+  constructor(
+    translate: TranslocoService,
+    location: Location,
+    @Optional()
+    @Inject(LOCALIZE_ROUTER_CONFIG)
+    localizeRouterConfig?: LocalizeRouterConfig
+  ) {
     super(translate, location, localizeRouterConfig);
     this.locales = translate.getAvailableLangs() as string[];
     this.prefix = localizeRouterConfig.prefix;
@@ -454,5 +508,4 @@ export class DefaultLocalizeParser extends LocalizeParser {
       this.init(routes).then(resolve);
     });
   }
-
 }

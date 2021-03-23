@@ -1,16 +1,16 @@
 <a href="javascript:void(0)" (click)="switchLang('en')">ENG</a>
-<br>
+<br />
 <a href="javascript:void(0)" (click)="switchLang('fr')">FRA</a>
-<br>
+<br />
 
-<a [routerLink]="['/!child'] | localize">Child LazyLoaded</a>
-<br>
+<a [routerLink]="['/child'] | localize">Child LazyLoaded</a>
+<br />
 
-<a [routerLink]="['/!help/testa'] | localize">Help LazyLoaded</a>
-<br>
+<a [routerLink]="['/help'] | localize">Help LazyLoaded</a>
+<br />
 <ng-container *transloco="let t">
-  <a [routerLink]="['/greetings'] | localize">{{t('greetings')}}</a>
-  <br>
+  <a [routerLink]="['/greetings'] | localize">{{ t('greetings') }}</a>
+  <br />
   <a [routerLink]="['/asdf'] | localize">BAD PAGE</a>
 </ng-container>
 
